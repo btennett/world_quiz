@@ -1,10 +1,45 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>World Knowledge Quiz</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+
+<meta name="description" content="10 multiple-choice questions on geography, science, history, the arts, nature, food and sport. How well do you know the world?">
+<meta name="theme-color" content="#1F4E8C">
+
+<!-- Link previews (WhatsApp, iMessage, Facebook, Slack, X…)
+     Set for https://btennett.github.io/world_quiz/
+     og:image MUST be a full https:// address or WhatsApp won't show it. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="World Knowledge Quiz">
+<meta property="og:title" content="World Knowledge Quiz">
+<meta property="og:description" content="10 multiple-choice questions on geography, science, history, the arts, nature, food and sport. How well do you know the world?">
+<meta property="og:url" content="https://btennett.github.io/world_quiz/">
+<meta property="og:image" content="https://btennett.github.io/world_quiz/preview.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="World Knowledge Quiz: a multiple-choice question with five answers, the correct one ticked.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="World Knowledge Quiz">
+<meta name="twitter:description" content="10 multiple-choice questions on geography, science, history, the arts, nature, food and sport. How well do you know the world?">
+<meta name="twitter:image" content="https://btennett.github.io/world_quiz/preview.png">
+
+<!-- Browser tab and home-screen icons -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=JetBrains+Mono:wght@500&display=swap">
 <style>
+/* Base rules (previously supplied by the Claude artifact viewer) */
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
 /* Layout: one-screen phone app. Header (progress) / scrolling question card / thumb-zone action bar whose button never moves. */
 :root{
   --bg:#ECEFEA; --surface:#FFFFFF; --ink:#18201B; --muted:#5C665F; --line:#D2D9D2;
@@ -92,7 +127,8 @@ button{font:inherit;color:inherit}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (prefers-reduced-motion:no-preference){.fact{animation:rise .25s ease-out}@keyframes rise{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}}
 </style>
-
+</head>
+<body>
 <!--
 ================================================================
   QUIZ CONTENT — edit only this block to make a new version.
@@ -394,5 +430,5 @@ if (BANK.length) {
   $("mainBtn").textContent = "No questions loaded";
 }
 </script>
-
-</body></html>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>World Knowledge Quiz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one-screen phone app. Header (progress) / scrolling question card / thumb-zone action bar whose button never moves. */
+:root{
+  --bg:#ECEFEA; --surface:#FFFFFF; --ink:#18201B; --muted:#5C665F; --line:#D2D9D2;
+  --accent:#1F4E8C; --good:#1D7448; --bad:#B0281F; --good-soft:#E2F1E8; --bad-soft:#FAE6E3;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-head:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111613; --surface:#1A221D; --ink:#E5ECE6; --muted:#98A49B; --line:#2C3830;
+  --accent:#8DB4F0; --good:#4CC48A; --bad:#F27C70; --good-soft:#163024; --bad-soft:#3A1E1C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111613; --surface:#1A221D; --ink:#E5ECE6; --muted:#98A49B; --line:#2C3830;
+  --accent:#8DB4F0; --good:#4CC48A; --bad:#F27C70; --good-soft:#163024; --bad-soft:#3A1E1C; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-display);-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit}
+.app{height:100%;max-width:560px;margin:0 auto;display:grid;grid-template-rows:auto 1fr auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.top{padding-block:14px 10px;display:flex;flex-direction:column;gap:10px}
+.top-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand{font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin:0}
+.brand em{font-style:normal;color:var(--accent)}
+.score{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.score b{color:var(--ink);font-size:1rem}
+.dots{display:grid;gap:5px;list-style:none;margin:0;padding:0}
+.dots li{height:6px;border-radius:3px;background:var(--line)}
+.dots li.now{background:var(--accent)} .dots li.ok{background:var(--good)} .dots li.no{background:var(--bad)}
+
+.stage{overflow-y:auto;min-height:0;padding-block:6px 14px;overscroll-behavior:contain}
+.card{display:flex;flex-direction:column;gap:14px}
+.meta{font-family:var(--f-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.question{font-family:var(--f-head);font-weight:600;font-size:clamp(1.25rem,5.2vw,1.55rem);line-height:1.3;margin:0;text-wrap:balance}
+
+.options{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.opt{width:100%;min-height:52px;display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:12px;
+  text-align:left;padding:10px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);
+  font-size:1rem;font-weight:500;cursor:pointer;transition:border-color .15s,background .15s,transform .08s}
+.opt:active{transform:scale(.985)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (hover:hover){.opt:not([disabled]):hover{border-color:var(--accent)}}
+.opt .key{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-family:var(--f-mono);font-size:.85rem;
+  background:var(--bg);color:var(--muted)}
+.opt .txt{min-width:0;line-height:1.3}
+.opt .res{font-weight:800;font-size:1.05rem}
+.opt[disabled]{cursor:default}
+.opt.correct{border-color:var(--good);background:var(--good-soft)}
+.opt.correct .key{background:var(--good);color:var(--surface)}
+.opt.correct .res{color:var(--good)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.wrong .key{background:var(--bad);color:var(--surface)}
+.opt.wrong .res{color:var(--bad)}
+.opt.faded{opacity:.5}
+
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.fact .verdict{font-weight:800;font-size:1.05rem;margin:0}
+.fact .verdict.ok{color:var(--good)} .fact .verdict.no{color:var(--bad)}
+.fact p{margin:0;font-family:var(--f-head);font-size:1rem;line-height:1.55}
+
+.over{display:flex;flex-direction:column;gap:16px}
+.final{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.final .big{font-weight:800;font-size:3.2rem;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin:0}
+.final p{margin:0}
+.final .best{font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+.review-title{font-size:.8rem;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 0 0;font-weight:500}
+.review{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.review li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.review .mark{font-weight:800;font-size:1.05rem;line-height:1.3}
+.review .mark.ok{color:var(--good)} .review .mark.no{color:var(--bad)}
+.review .q{font-family:var(--f-head);font-size:.95rem;line-height:1.35;min-width:0}
+.review .ans{grid-column:2;font-size:.85rem;color:var(--muted)}
+.review .ans b{color:var(--ink);font-weight:600}
+
+.actions{padding-block:10px 14px;border-top:1px solid var(--line);background:var(--bg)}
+.btn{width:100%;border:none;border-radius:12px;min-height:58px;font-weight:700;font-size:1.1rem;cursor:pointer;
+  background:var(--accent);color:var(--surface);transition:transform .08s,opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn[disabled]{background:var(--line);color:var(--muted);cursor:default;transform:none}
+.foot{font-family:var(--f-mono);font-size:.68rem;color:var(--muted);text-align:center;margin:8px 0 0}
+.error{background:var(--bad-soft);border:1px solid var(--bad);border-radius:12px;padding:14px 16px;font-size:.92rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:no-preference){.fact{animation:rise .25s ease-out}@keyframes rise{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}}
+</style>
+
+<!--
+================================================================
+  QUIZ CONTENT — edit only this block to make a new version.
+  ----------------------------------------------------------------
+  settings.questionsPerGame : how many questions each game draws
+  questions[] : one object per question
+    category : short label shown above the question
+    q        : the question text
+    answer   : the correct answer (must match one of the options exactly)
+    options  : 3 to 6 choices including the answer (5 fits best on a phone)
+    fact     : one or two sentences shown after answering (optional)
+  Options are shuffled each time, so order doesn't matter.
+  Questions with a typo'd answer are skipped and listed in the console.
+================================================================
+-->
+<script type="application/json" id="quiz-data">
+{
+  "title": "World Knowledge Quiz",
+  "version": "1.0 · October 2026",
+  "settings": { "questionsPerGame": 10 },
+  "questions": [
+    { "category": "Geography", "q": "What is the capital of Australia?", "answer": "Canberra",
+      "options": ["Canberra", "Sydney", "Melbourne", "Perth", "Brisbane"],
+      "fact": "Canberra was purpose-built as a compromise between rivals Sydney and Melbourne." },
+    { "category": "Geography", "q": "Mount Kilimanjaro is in which country?", "answer": "Tanzania",
+      "options": ["Tanzania", "Kenya", "Uganda", "Ethiopia", "Rwanda"],
+      "fact": "It is Africa's highest mountain, close to the border with Kenya." },
+    { "category": "Geography", "q": "Which sea has no coastline?", "answer": "Sargasso Sea",
+      "options": ["Sargasso Sea", "Caspian Sea", "Coral Sea", "Tasman Sea", "Arabian Sea"],
+      "fact": "The Sargasso Sea in the North Atlantic is bounded by ocean currents rather than land." },
+    { "category": "Geography", "q": "Which strait separates Europe from Africa?", "answer": "Strait of Gibraltar",
+      "options": ["Strait of Gibraltar", "Bosphorus", "Strait of Hormuz", "Strait of Malacca", "Strait of Magellan"],
+      "fact": "At its narrowest it is about 14 km wide, between Spain and Morocco." },
+    { "category": "Geography", "q": "What is the largest country in the world by land area?", "answer": "Russia",
+      "options": ["Russia", "Canada", "China", "Brazil", "Australia"],
+      "fact": "Russia spans 11 time zones, from the Baltic Sea to the Pacific." },
+    { "category": "Geography", "q": "What is the largest hot desert in the world?", "answer": "Sahara",
+      "options": ["Sahara", "Arabian", "Gobi", "Kalahari", "Great Victoria"],
+      "fact": "Counting cold deserts, Antarctica is larger, because a desert is defined by low rainfall." },
+    { "category": "Science", "q": "What is the chemical symbol for gold?", "answer": "Au",
+      "options": ["Au", "Ag", "Gd", "Go", "Gl"],
+      "fact": "Au comes from 'aurum', the Latin word for gold. Ag is silver." },
+    { "category": "Science", "q": "Which gas makes up most of Earth's atmosphere?", "answer": "Nitrogen",
+      "options": ["Nitrogen", "Oxygen", "Carbon dioxide", "Argon", "Hydrogen"],
+      "fact": "Nitrogen is about 78% of dry air; oxygen is about 21%." },
+    { "category": "Science", "q": "How many bones are in an adult human body?", "answer": "206",
+      "options": ["186", "196", "206", "216", "226"],
+      "fact": "Babies are born with around 300, and many fuse together as they grow." },
+    { "category": "Science", "q": "What is the hardest naturally occurring mineral?", "answer": "Diamond",
+      "options": ["Diamond", "Quartz", "Corundum", "Topaz", "Feldspar"],
+      "fact": "Diamond scores 10, the top of the Mohs hardness scale." },
+    { "category": "Science", "q": "Which blood type can be given to almost anyone needing red cells?", "answer": "O negative",
+      "options": ["O negative", "O positive", "AB positive", "A negative", "B positive"],
+      "fact": "O negative is called the universal donor type for red blood cells." },
+    { "category": "Space", "q": "Which planet takes the shortest time to orbit the Sun?", "answer": "Mercury",
+      "options": ["Mercury", "Venus", "Earth", "Mars", "Jupiter"],
+      "fact": "A year on Mercury lasts about 88 Earth days." },
+    { "category": "Space", "q": "What is the nearest star to Earth after the Sun?", "answer": "Proxima Centauri",
+      "options": ["Proxima Centauri", "Sirius", "Betelgeuse", "Vega", "Polaris"],
+      "fact": "Its light takes about 4.2 years to reach us." },
+    { "category": "History", "q": "In which year did the Berlin Wall fall?", "answer": "1989",
+      "options": ["1985", "1987", "1989", "1991", "1993"],
+      "fact": "Germany was formally reunified less than a year later, in October 1990." },
+    { "category": "History", "q": "Who was the first person to travel into space?", "answer": "Yuri Gagarin",
+      "options": ["Yuri Gagarin", "Neil Armstrong", "Valentina Tereshkova", "Alexei Leonov", "Alan Shepard"],
+      "fact": "Gagarin orbited Earth once in Vostok 1 on 12 April 1961." },
+    { "category": "History", "q": "Which of the Seven Wonders of the Ancient World is still standing?", "answer": "Great Pyramid of Giza",
+      "options": ["Great Pyramid of Giza", "Colossus of Rhodes", "Lighthouse of Alexandria", "Hanging Gardens of Babylon", "Temple of Artemis"],
+      "fact": "It is also the oldest of the seven, built around 4,500 years ago." },
+    { "category": "History", "q": "In which year did Nelson Mandela become President of South Africa?", "answer": "1994",
+      "options": ["1989", "1990", "1992", "1994", "1999"],
+      "fact": "He was elected in the country's first fully democratic election." },
+    { "category": "History", "q": "Which civilisation built Machu Picchu?", "answer": "Inca",
+      "options": ["Inca", "Aztec", "Maya", "Olmec", "Toltec"],
+      "fact": "The citadel sits high in the Andes of Peru and dates from the 1400s." },
+    { "category": "History", "q": "The Rosetta Stone was the key to reading which script?", "answer": "Egyptian hieroglyphs",
+      "options": ["Egyptian hieroglyphs", "Cuneiform", "Linear B", "Mayan glyphs", "Sanskrit"],
+      "fact": "It carries the same decree in hieroglyphs, Demotic and Ancient Greek." },
+    { "category": "Arts", "q": "Who painted The Starry Night?", "answer": "Vincent van Gogh",
+      "options": ["Vincent van Gogh", "Claude Monet", "Paul Cézanne", "Paul Gauguin", "Edvard Munch"],
+      "fact": "He painted it in 1889, from his room at an asylum in southern France." },
+    { "category": "Literature", "q": "Who wrote One Hundred Years of Solitude?", "answer": "Gabriel García Márquez",
+      "options": ["Gabriel García Márquez", "Jorge Luis Borges", "Isabel Allende", "Mario Vargas Llosa", "Pablo Neruda"],
+      "fact": "The Colombian author won the Nobel Prize in Literature in 1982." },
+    { "category": "Literature", "q": "Who wrote Don Quixote?", "answer": "Miguel de Cervantes",
+      "options": ["Miguel de Cervantes", "Lope de Vega", "Dante Alighieri", "Federico García Lorca", "Luís de Camões"],
+      "fact": "It was published in two parts, in 1605 and 1615." },
+    { "category": "Music", "q": "Who composed The Four Seasons?", "answer": "Antonio Vivaldi",
+      "options": ["Antonio Vivaldi", "Johann Sebastian Bach", "George Frideric Handel", "Wolfgang Amadeus Mozart", "Joseph Haydn"],
+      "fact": "The four violin concertos were published in Amsterdam in 1725." },
+    { "category": "Literature", "q": "The haiku poetry form comes from which country?", "answer": "Japan",
+      "options": ["Japan", "China", "Korea", "Vietnam", "Thailand"],
+      "fact": "A traditional haiku has three lines of 5, 7 and 5 sound units." },
+    { "category": "Nature", "q": "What is the largest animal known to have ever lived?", "answer": "Blue whale",
+      "options": ["Blue whale", "Argentinosaurus", "African elephant", "Whale shark", "Megalodon"],
+      "fact": "Blue whales can reach about 30 metres long." },
+    { "category": "Nature", "q": "Which is the only mammal capable of true flight?", "answer": "Bat",
+      "options": ["Bat", "Flying squirrel", "Sugar glider", "Colugo", "Pangolin"],
+      "fact": "Flying squirrels, sugar gliders and colugos glide; only bats flap their wings to fly." },
+    { "category": "Nature", "q": "How many hearts does an octopus have?", "answer": "3",
+      "options": ["1", "2", "3", "4", "8"],
+      "fact": "Two pump blood through the gills and one pumps it around the body." },
+    { "category": "Nature", "q": "The kiwi bird is native to which country?", "answer": "New Zealand",
+      "options": ["New Zealand", "Australia", "Papua New Guinea", "Madagascar", "Fiji"],
+      "fact": "It cannot fly, and New Zealanders are nicknamed 'Kiwis' after it." },
+    { "category": "Language", "q": "Which language has the most native speakers?", "answer": "Mandarin Chinese",
+      "options": ["Mandarin Chinese", "Spanish", "English", "Hindi", "Arabic"],
+      "fact": "English has more total speakers once second-language learners are counted." },
+    { "category": "Language", "q": "How many national languages does Switzerland have?", "answer": "4",
+      "options": ["2", "3", "4", "5", "6"],
+      "fact": "German, French, Italian and Romansh." },
+    { "category": "Sport", "q": "How many balls are in a standard over in cricket?", "answer": "6",
+      "options": ["4", "5", "6", "8", "10"],
+      "fact": "Australia used 8-ball overs at times until the late 1970s." },
+    { "category": "Sport", "q": "Which city hosted the first modern Olympic Games in 1896?", "answer": "Athens",
+      "options": ["Athens", "Paris", "London", "Rome", "Stockholm"],
+      "fact": "The revival nodded to the ancient Games held at Olympia in Greece." },
+    { "category": "Sport", "q": "How many players does each rugby union team have on the field?", "answer": "15",
+      "options": ["7", "11", "13", "15", "18"],
+      "fact": "Rugby league uses 13, and rugby sevens uses 7." },
+    { "category": "Food", "q": "Saffron comes from which part of a plant?", "answer": "Flower stigmas",
+      "options": ["Flower stigmas", "Seeds", "Roots", "Bark", "Leaves"],
+      "fact": "It comes from the crocus flower and is picked by hand, which is why it is so expensive." },
+    { "category": "Food", "q": "Paella originally comes from which Spanish region?", "answer": "Valencia",
+      "options": ["Valencia", "Andalusia", "Catalonia", "Galicia", "Basque Country"],
+      "fact": "The traditional Valencian version uses rabbit, chicken and beans, not seafood." },
+    { "category": "Food", "q": "Kimchi is a staple dish from which country?", "answer": "South Korea",
+      "options": ["South Korea", "Japan", "China", "Vietnam", "Thailand"],
+      "fact": "It is usually fermented napa cabbage with chilli, garlic and ginger. It is eaten across the Korean peninsula." }
+  ]
+}
+</script>
+
+<div class="app">
+  <header class="top">
+    <div class="top-row">
+      <h1 class="brand">World <em>Knowledge</em> Quiz</h1>
+      <div class="score" id="scoreBox"></div>
+    </div>
+    <ol class="dots" id="dots" aria-hidden="true"></ol>
+  </header>
+
+  <main class="stage" id="stage">
+    <section class="card" id="play">
+      <div class="meta" id="cat"></div>
+      <h2 class="question" id="question"></h2>
+      <ol class="options" id="options"></ol>
+      <div class="fact" id="fact" hidden>
+        <p class="verdict" id="verdict"></p>
+        <p id="factText"></p>
+      </div>
+    </section>
+
+    <section class="over" id="over" hidden>
+      <div class="final">
+        <p class="big" id="finalScore"></p>
+        <p id="finalMsg"></p>
+        <p class="best" id="best"></p>
+      </div>
+      <h2 class="review-title">Your answers</h2>
+      <ol class="review" id="review"></ol>
+    </section>
+  </main>
+
+  <footer class="actions">
+    <button class="btn" id="mainBtn" type="button" disabled>Pick an answer</button>
+    <p class="foot" id="foot"></p>
+  </footer>
+  <div class="sr" aria-live="polite" id="live"></div>
+</div>
+
+<script>
+// ---------- Load and check the content ----------
+const $ = id => document.getElementById(id);
+const KEYS = "ABCDEF";
+let DATA, BANK = [], PER = 10;
+
+try {
+  DATA = JSON.parse($("quiz-data").textContent);
+  PER = Math.max(1, +(DATA.settings && DATA.settings.questionsPerGame) || 10);
+  (DATA.questions || []).forEach((x, n) => {
+    const opts = Array.isArray(x.options) ? x.options : [];
+    const problem = !x.q ? "missing question text"
+      : opts.length < 3 || opts.length > 6 ? "needs 3 to 6 options"
+      : !opts.includes(x.answer) ? `answer "${x.answer}" is not one of the options`
+      : new Set(opts).size !== opts.length ? "has duplicate options" : null;
+    if (problem) console.warn(`Quiz question ${n + 1} skipped: ${problem}.`);
+    else BANK.push(x);
+  });
+} catch (e) {
+  console.error(e);
+}
+
+// ---------- Game ----------
+let round = [], i = 0, score = 0, answers = [], picked = false;
+const shuffle = a => { a = [...a]; for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+const total = () => round.length;
+
+function header() {
+  const done = !$("over").hidden;
+  $("scoreBox").innerHTML = done ? `Done · Score <b>${score}</b>`
+    : `Q <b>${Math.min(i + 1, total())}</b>/${total()} · Score <b>${score}</b>`;
+  $("dots").style.gridTemplateColumns = `repeat(${total()},1fr)`;
+  $("dots").innerHTML = round.map((_, k) => {
+    const c = k < answers.length ? (answers[k].ok ? "ok" : "no") : (k === i && !done ? "now" : "");
+    return `<li class="${c}"></li>`;
+  }).join("");
+}
+
+function show() {
+  const x = round[i];
+  picked = false;
+  x._order = shuffle(x.options);
+  $("cat").textContent = x.category || "General";
+  $("question").textContent = x.q;
+  $("options").innerHTML = x._order.map((o, k) =>
+    `<li><button class="opt" type="button" id="opt-${k}" data-v="${esc(o)}"><span class="key">${KEYS[k]}</span><span class="txt">${esc(o)}</span><span class="res" aria-hidden="true"></span></button></li>`
+  ).join("");
+  $("fact").hidden = true;
+  const b = $("mainBtn"); b.disabled = true; b.textContent = "Pick an answer";
+  $("stage").scrollTop = 0;
+  header();
+}
+
+function choose(value) {
+  if (picked) return;
+  picked = true;
+  const x = round[i], ok = value === x.answer;
+  if (ok) score++;
+  answers.push({ x, value, ok });
+  buzz(ok ? 20 : [30, 40, 30]);
+
+  document.querySelectorAll(".opt").forEach(btn => {
+    const v = btn.dataset.v; btn.disabled = true;
+    if (v === x.answer) { btn.classList.add("correct"); btn.querySelector(".res").textContent = "✓"; }
+    else if (v === value) { btn.classList.add("wrong"); btn.querySelector(".res").textContent = "✗"; }
+    else btn.classList.add("faded");
+  });
+
+  const vd = $("verdict");
+  vd.textContent = ok ? "Correct!" : `Not quite. It's ${x.answer}.`;
+  vd.className = "verdict " + (ok ? "ok" : "no");
+  $("factText").textContent = x.fact || "";
+  $("factText").hidden = !x.fact;
+  $("fact").hidden = false;
+  $("live").textContent = vd.textContent + " " + (x.fact || "");
+
+  const b = $("mainBtn");
+  b.disabled = false;
+  b.textContent = i === total() - 1 ? "See your results →" : "Next question →";
+  b.focus({ preventScroll: true });
+  header();
+  requestAnimationFrame(() => $("fact").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" }));
+}
+
+function finish() {
+  $("play").hidden = true; $("over").hidden = false;
+  const n = total(), pct = score / n;
+  $("finalScore").textContent = `${score}/${n}`;
+  $("finalMsg").textContent = pct >= .9 ? "Outstanding. A true globetrotter." : pct >= .7 ? "Great result. You know your world." : pct >= .5 ? "Solid effort. Have another go." : "A tough set. Every round is different, so try again.";
+  let best = score;
+  try { const key = "wkq-best-" + (DATA.version || "1"); best = Math.max(score, +(localStorage.getItem(key) || 0)); localStorage.setItem(key, best); } catch (e) {}
+  $("best").textContent = `Best score on this device: ${best}/${n}`;
+  $("review").innerHTML = answers.map(a =>
+    `<li><span class="mark ${a.ok ? "ok" : "no"}" aria-label="${a.ok ? "correct" : "wrong"}">${a.ok ? "✓" : "✗"}</span><span class="q">${esc(a.x.q)}</span>
+     <span class="ans">${a.ok ? `<b>${esc(a.x.answer)}</b>` : `You said ${esc(a.value)} · answer: <b>${esc(a.x.answer)}</b>`}</span></li>`
+  ).join("");
+  const b = $("mainBtn"); b.disabled = false; b.textContent = "Play again ↻"; b.focus({ preventScroll: true });
+  $("stage").scrollTop = 0;
+  header();
+}
+
+function start() {
+  round = shuffle(BANK).slice(0, Math.min(PER, BANK.length));
+  i = 0; score = 0; answers = [];
+  $("over").hidden = true; $("play").hidden = false;
+  show();
+}
+
+$("options").addEventListener("click", e => { const b = e.target.closest(".opt"); if (b) choose(b.dataset.v); });
+$("mainBtn").addEventListener("click", () => {
+  if (!$("over").hidden) start();
+  else if (picked) { if (i < total() - 1) { i++; show(); } else finish(); }
+});
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "A") return;
+  const k = e.key.toUpperCase(), idx = KEYS.indexOf(k);
+  if (!picked && $("over").hidden && idx > -1 && idx < (round[i]?._order.length || 0) && k.length === 1) { e.preventDefault(); choose(round[i]._order[idx]); }
+  else if (e.key === "Enter" && !$("mainBtn").disabled && document.activeElement !== $("mainBtn")) { e.preventDefault(); $("mainBtn").click(); }
+});
+
+if (BANK.length) {
+  $("foot").textContent = `${BANK.length} questions · version ${DATA.version || "1"}`;
+  start();
+} else {
+  $("play").innerHTML = `<div class="error">The quiz content couldn't be loaded. Check the quiz-data block for a JSON typo, such as a missing comma or quote.</div>`;
+  $("mainBtn").textContent = "No questions loaded";
+}
+</script>
+
+</body></html>
